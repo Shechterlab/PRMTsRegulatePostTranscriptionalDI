@@ -1,0 +1,13 @@
+{
+	"n_targets": 210425,
+	"n_bootstraps": 50,
+	"n_processed": 51409340,
+	"n_pseudoaligned": 46098582,
+	"n_unique": 12889003,
+	"p_pseudoaligned": 89.7,
+	"p_unique": 25.1,
+	"kallisto_version": "0.46.0",
+	"index_version": 10,
+	"start_time": "Fri Dec 13 12:09:34 2019",
+	"call": "kallisto quant -i gencode.v30lift37.transcripts.fasta.idx -b 50 --threads=40 -o D2M1 121219_D2_D4/D2M1/D2M1_CRRA190011647-1a_HMKJGDSXX_L4_1.fq.gz 121219_D2_D4/D2M1/D2M1_CRRA190011647-1a_HMKJGDSXX_L4_2.fq.gz"
+}
