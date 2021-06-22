@@ -1,0 +1,130 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\RNAseq\\'))
+library(tidyverse)
+library(rtracklayer)
+```
+
+```{r}
+hg19 <-  as.data.frame(rtracklayer::import('gencode.v19.annotation.gtf'))
+hg19 <- hg19[!duplicated(hg19$gene_name),]
+hg19 <- list(hg19=hg19)
+hg19_introns <- read.table('expressed_intron_distance_to_TES.bed',header = T, sep = '\t')
+#load in all the rMATS analyses
+d2g <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+
+#compile a list of dataframes
+dataframes <- list(d2g = d2g, d2gm = d2gm, d2m = d2m)
+#ensure all genes being analyzed have FDR < 0.05
+dataframes <- lapply(dataframes, function(x) filter(x, FDR < 0.05))
+dataframes <- Map(merge, dataframes, hg19, by.x='geneSymbol', by.y='gene_name')
+dataframes <- lapply(dataframes, function(x) x[!duplicated(x[c('chr','upstreamEE','downstreamES')]),])
+#combine all the dataframes while keeping the info for original condition analyzed
+dataframes <- bind_rows(dataframes, .id = 'df')
+
+#calculate distance from intron end to TES
+dataframes$distance_to_TES <- NA
+for (i in 1:nrow(dataframes)) {
+  if (dataframes[i, 6] == '+') {
+    dataframes[i,50] <- dataframes[i,27] - dataframes[i,11]
+  }
+  else {
+    dataframes[i,50] <- dataframes[i,10] - dataframes[i,26]
+  }
+}
+
+#Determine distance from TES to downstreamES
+rmats <- dataframes[c(1,50)]
+#provide a group annotation (for ggplot2 purposes)
+hg19_introns$df <- 'hg19'
+#filter columns for distance and group hg19
+df <- hg19_introns[c(16,15)]
+#combine rmats and df rows
+combined <- rbind(rmats, df)
+#divide upstream or downstrea genes by 1000 (to convert to kb)
+combined$distance <- combined$distance_to_TES / 1000
+#define colors for graph
+#colors <- c('#1DB466','#54985D','#0F8745','#35B1AD','#057976','#A477B3','#955DA4','#7C3493','#D4D4D4')
+colors <- c('#0F8745','#f57f20','#7C3493','#D4D4D4')
+
+#define order of graph
+order <- c('d2g', 'd2gm',  'd2m', 'hg19')
+#convert dataframe names to factors to allow ordering
+combined$df <- factor(combined$df, levels = order)
+#uncomment directly below to save pdf
+
+stat_box_data <- function(y, upper_limit = max(log10(combined$distance)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+```
+
+```{r}
+
+#pdf('../R_figures/d2_PRMTi_RI_distancetoTES_vs_A549expressed.pdf', height=8, width = 8)
+ggplot(combined, aes(x=df, y=log10(distance), fill = df)) +
+  geom_boxplot(alpha = 0.8) +
+  scale_fill_manual(values = colors) +
+  #geom_smooth(method=lm,   # Add linear regression lines
+  #            se=TRUE, fullrange = TRUE, color = 'black', fill = 'dimgray') +
+  #geom_point(aes(fill = df), size =0.5, shape = 21, position = position_jitterdodge()) +
+  #geom_jitter(position = position_dodge2(width = 1), color="black", size=0.1, alpha=0.1) +
+  ggtitle("Distance to TES") +
+  xlab("") + 
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  theme(panel.border = element_rect(colour = "black", fill=NA, size=1))+
+  ylab('log10(distance to TES)') +
+  geom_hline(yintercept = log10(median(combined[combined$df == 'hg19',]$distance)) , linetype = 'dashed')+
+  ylim(-3,3.5)+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+#dev.off()
+```
+
+```{r message=FALSE, warning = FALSE, include=FALSE}
+
+##stats
+dfs <- c('d2g','d2gm','d2m')
+
+#randomly shuffle and permute data to determine p-value
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- data.frame(df=NA,value=numeric(nsim),statistic=numeric(nsim))
+#res2 <- data.frame(matrix(NA, nrow = length(dfs), ncol = 2))
+for ( i in unique(dfs)) {
+  for (j in 1:nsim) {
+    n = nrow(combined[combined$df == i,])
+    ## standard approach: scramble response value
+    random <- sample_n(combined[combined$df == 'hg19',], n)
+    test <- ks.test(combined[combined$df == i,]$distance, random$distance, alternative = 'greater')
+    ## compute & store difference in means; store the value
+    res[j,1] <- i
+    res[j,2] <- test$p.value
+    res[j,3] <- test$statistic
+  }
+  print(res[1,1])
+  print(median(res[,2]))
+  print(median(res[,3]))
+}
+```
+
+

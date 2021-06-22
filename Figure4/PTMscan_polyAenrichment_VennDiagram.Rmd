@@ -1,0 +1,161 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\polyA enrichment/'))
+library(tidyverse)
+library(VennDiagram)
+library(RColorBrewer)
+
+```
+
+```{r}
+df_1 <- read.csv('InputChromatin_GSK_vs_DMSO.csv')
+df_1 <- df_1[df_1$p.value > 3.32,]
+df_1$Score <- abs(df_1$Score)
+df_2 <- read.csv('PTMscan_Trypsin_GluC_MMA_SDMA_ADMA_uniqueAccessions.csv')
+
+data <- list(polyA = df_1, PTMscan = df_2)
+#data <- lapply(data, function(x) {x$GeneID <- sub("\\.\\d+","",x$GeneID);x})
+#data <- lapply(data, function(x) {x <- x[!is.na(x$GeneID),]})
+
+#DMSO_color <- '#d4d4d4'
+#GSK_color <- '#008837'
+#MS023_color <- '#7b3294'
+
+plt <- venn.diagram(x = list(data[[1]]$ï..Accession, data[[2]]$Accession), category.names = c("polyA" , "PTMscan"), filename = NULL, fill = c('#008837','#e66101'), euler.d=T, scaled=T, output = F)
+##ggsave(plt, file= paste('InputChromatin_GSK_vs_DMSO_PTMscan', 'pdf' ,sep="."), device ='pdf', width = 15, height = 15, dpi = 300)
+
+overlap <- calculate.overlap(x = list(data[[1]]$ï..Accession, data[[2]]$Accession))
+
+common <- overlap$a3
+common_proteins <- merge(common, df_1, by.x = 'x', by.y = 'ï..Accession')
+common_proteins <- common_proteins[order(common_proteins$Score, decreasing = TRUE),]
+common_proteins$Gene.Symbol[1:20]
+##write.csv(overlap$a3, 'InputChromatin_GSK_vs_DMSO_PTMscan_common.csv')
+
+plot(grid::grid.draw(plt), x= 1, y= 1)
+
+```
+
+```{r}
+df_1 <- read.csv('InputChromatin_MS023_vs_DMSO.csv')
+df_1 <- df_1[df_1$p.value > 3.32,]
+df_1$Score <- abs(df_1$Score)
+
+df_2 <- read.csv('PTMscan_Trypsin_GluC_MMA_SDMA_ADMA_uniqueAccessions.csv')
+
+data <- list(polyA = df_1, PTMscan = df_2)
+#data <- lapply(data, function(x) {x$GeneID <- sub("\\.\\d+","",x$GeneID);x})
+#data <- lapply(data, function(x) {x <- x[!is.na(x$GeneID),]})
+
+#DMSO_color <- '#d4d4d4'
+#GSK_color <- '#008837'
+#MS023_color <- '#7b3294'
+
+plt <- venn.diagram(x = list(data[[1]]$ï..Accession, data[[2]]$Accession), category.names = c("polyA" , "PTMscan"), filename = NULL, fill = c('#7b3294','#e66101'), euler.d=T, scaled=T, output = F)
+#ggsave(plt, file= paste('InputChromatin_MS023_vs_DMSO_PTMscan', 'pdf' ,sep="."), device ='pdf', width = 15, height = 15, dpi = 300)
+overlap <- calculate.overlap(x = list(data[[1]]$ï..Accession, data[[2]]$Accession))
+common <- overlap$a3
+common_proteins <- merge(common, df_1, by.x = 'x', by.y = 'ï..Accession')
+common_proteins <- common_proteins[order(common_proteins$Score, decreasing = TRUE),]
+common_proteins$Gene.Symbol[1:20]
+#write.csv(overlap$a3, 'InputChromatin_MS023_vs_DMSO_PTMscan_common.csv')
+
+plot(grid::grid.draw(plt), x= 1, y= 1)
+
+```
+
+```{r}
+df_1 <- read.csv('polyA_backgroundsubtracted_GSK_vs_DMSO.csv')
+df_1 <- df_1[df_1$p.value > 3.32,]
+df_1$Score <- abs(df_1$Score)
+
+df_2 <- read.csv('PTMscan_Trypsin_GluC_MMA_SDMA_ADMA_uniqueAccessions.csv')
+
+data <- list(polyA = df_1, PTMscan = df_2)
+#data <- lapply(data, function(x) {x$GeneID <- sub("\\.\\d+","",x$GeneID);x})
+#data <- lapply(data, function(x) {x <- x[!is.na(x$GeneID),]})
+
+#DMSO_color <- '#d4d4d4'
+#GSK_color <- '#008837'
+#MS023_color <- '#7b3294'
+
+plt <- venn.diagram(x = list(data[[1]]$ï..Accession, data[[2]]$Accession), category.names = c("polyA" , "PTMscan"), filename = NULL, fill = c('#008837','#e66101'), euler.d=T, scaled=T, output = F)
+#ggsave(plt, file= paste('polyA_backgroundsubtracted_GSK_vs_DMSO_PTMscan', 'pdf' ,sep="."), device ='pdf', width = 15, height = 15, dpi = 300)
+
+overlap <- calculate.overlap(x = list(data[[1]]$ï..Accession, data[[2]]$Accession))
+common <- overlap$a3
+common_proteins <- merge(common, df_1, by.x = 'x', by.y = 'ï..Accession')
+common_proteins <- common_proteins[order(common_proteins$Score, decreasing = TRUE),]
+common_proteins$Gene.Symbol[1:20]
+#write.csv(overlap$a3, 'polyA_backgroundsubtracted_GSK_vs_DMSO_common.csv')
+
+plot(grid::grid.draw(plt), x= 1, y= 1)
+
+```
+```{r}
+df_1 <- read.csv('InputChromatin_MS023_vs_GSK.csv')
+df_1 <- df_1[df_1$p.value > 3.32,]
+df_1$Score <- abs(df_1$Score)
+
+df_2 <- read.csv('PTMscan_Trypsin_GluC_MMA_SDMA_ADMA_uniqueAccessions.csv')
+
+data <- list(polyA = df_1, PTMscan = df_2)
+#data <- lapply(data, function(x) {x$GeneID <- sub("\\.\\d+","",x$GeneID);x})
+#data <- lapply(data, function(x) {x <- x[!is.na(x$GeneID),]})
+
+#DMSO_color <- '#d4d4d4'
+#GSK_color <- '#008837'
+#MS023_color <- '#7b3294'
+
+plt <- venn.diagram(x = list(data[[1]]$ï..Accession, data[[2]]$Accession), category.names = c("polyA" , "PTMscan"), filename = NULL, fill = c('#80cdc1','#e66101'), euler.d=T, scaled=T, output = F)
+ggsave(plt, file= paste('InputChromatin_MS023_vs_GSK_PTMscan', 'pdf' ,sep="."), device ='pdf', width = 15, height = 15, dpi = 300)
+
+overlap <- calculate.overlap(x = list(data[[1]]$ï..Accession, data[[2]]$Accession))
+common <- overlap$a3
+common_proteins <- merge(common, df_1, by.x = 'x', by.y = 'ï..Accession')
+common_proteins <- common_proteins[order(common_proteins$Score, decreasing = TRUE),]
+common_proteins$Gene.Symbol[1:20]
+
+write.csv(common_proteins, 'InputChromatin_MS023_vs_GSK_PTMscan_common.csv')
+
+plot(grid::grid.draw(plt), x= 1, y= 1)
+
+```
+
+
+```{r}
+df_1 <- read.csv('polyA_backgroundsubtracted_MS023_vs_GSK.csv')
+df_1 <- df_1[df_1$p.value > 3.32,]
+df_1$Score <- abs(df_1$Score)
+
+df_2 <- read.csv('PTMscan_Trypsin_GluC_MMA_SDMA_ADMA_uniqueAccessions.csv')
+
+data <- list(polyA = df_1, PTMscan = df_2)
+#data <- lapply(data, function(x) {x$GeneID <- sub("\\.\\d+","",x$GeneID);x})
+#data <- lapply(data, function(x) {x <- x[!is.na(x$GeneID),]})
+
+#DMSO_color <- '#d4d4d4'
+#GSK_color <- '#008837'
+#MS023_color <- '#7b3294'
+
+plt <- venn.diagram(x = list(data[[1]]$ï..Accession, data[[2]]$Accession), category.names = c("polyA" , "PTMscan"), filename = NULL, fill = c('#80cdc1','#e66101'), euler.d=T, scaled=T, output = F)
+ggsave(plt, file= paste('polyA_backgroundsubtracted_MS023_vs_GSK_PTMscan', 'pdf' ,sep="."), device ='pdf', width = 15, height = 15, dpi = 300)
+
+
+overlap <- calculate.overlap(x = list(data[[1]]$ï..Accession, data[[2]]$Accession))
+common <- overlap$a3
+common_proteins <- merge(common, df_1, by.x = 'x', by.y = 'ï..Accession')
+common_proteins <- common_proteins[order(common_proteins$Score, decreasing = TRUE),]
+common_proteins[1:20,c(3,5,6)]
+
+write.csv(common_proteins, 'polyA_backgroundsubtracted_MS023_vs_GSK_PTMscan_common.csv')
+
+plot(grid::grid.draw(plt), x= 1, y= 1)
+
+```
+
+

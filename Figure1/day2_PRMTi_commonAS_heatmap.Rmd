@@ -1,0 +1,178 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\RNAseq\\'))
+library(ComplexHeatmap)
+library(circlize)
+library(tidyverse)
+```
+
+```{r RI}
+#load in all the rMATS analyses
+d2g_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+#compile a list of RI
+RI <- list(d2g_RI = d2g_RI, d2gm_RI = d2gm_RI, d2m_RI = d2m_RI)
+#ensure all genes being analyzed have FDR < 0.05 and no duplicate genes; multiply ONLY RI by -1
+RI <- lapply(RI, function(x) filter(x, FDR < 0.05))
+RI <- lapply(RI, function(x) {x <- x[!duplicated(c('upstreamES', 'upstreamEE', 'exonStart_0base', 'exonEnd','downstreamES','downstreamEE')),];x})
+RI <- lapply(RI, function(x) {x$IncLevelDifference <- x$IncLevelDifference * -1;x})
+RI <- RI %>% reduce(inner_join, by=c('upstreamES', 'upstreamEE', 'riExonStart_0base', 'riExonEnd','downstreamES','downstreamEE'))
+RI_psi <- RI[c(grep("^IncLevelDifference",colnames(RI)))]
+colnames(RI_psi) <- c('d2g_RI', 'd2gm_RI', 'd2m_RI')
+rownames(RI_psi) <- make.names(RI$geneSymbol.x, unique=TRUE)
+
+transposed_matrix <- t(RI_psi)
+
+z_tr_mt <- scale(transposed_matrix, )
+
+my_matrix <- t(z_tr_mt)
+
+my_matrix <- na.omit(my_matrix)
+
+ht_opt("heatmap_row_names_gp" = gpar(fontsize = 4), 'heatmap_column_names_gp' = gpar(fontsize = 8))
+col_fun = colorRamp2(c(-2,0,2), c('#55439B', 'grey90', '#E76F00'))
+hmap <- Heatmap(my_matrix, name = 'RI PRMT', col = col_fun, border = TRUE, cluster_rows = TRUE, cluster_columns = FALSE, show_column_dend = FALSE, 
+        show_row_dend = FALSE, row_names_side = 'left', show_row_names = TRUE, column_km = 1, row_km = 3)
+#pdf('../R_figures/day2_PRMTi_commonRI_rowkm.pdf',height=8, width=4)
+hmap <- draw(hmap)
+#dev.off()
+hmap
+
+nrow(my_matrix)
+```
+
+```{r SE}
+#load in all the rMATS analyses
+d2g_SE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/SE.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm_SE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/SE.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_SE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/SE.MATS.JCEC.txt', header = T, sep = '\t')
+#compile a list of SE
+SE <- list(d2g_SE = d2g_SE, d2gm_SE = d2gm_SE, d2m_SE = d2m_SE)
+#ensure all genes being analyzed have FDR < 0.05 and no duplicate genes; multiply ONLY SE by -1
+SE <- lapply(SE, function(x) filter(x, FDR < 0.05))
+SE <- lapply(SE, function(x) {x <- x[!duplicated(c('upstreamES', 'upstreamEE', 'exonStart_0base', 'exonEnd','downstreamES','downstreamEE')),];x})
+SE <- SE %>% reduce(inner_join, by=c('upstreamES', 'upstreamEE', 'exonStart_0base', 'exonEnd','downstreamES','downstreamEE'))
+SE_psi <- SE[c(grep("^IncLevelDifference",colnames(SE)))]
+colnames(SE_psi) <- c('d2g_SE', 'd2gm_SE', 'd2m_SE')
+rownames(SE_psi) <- make.names(SE$geneSymbol.x, unique=TRUE)
+
+transposed_matrix <- t(SE_psi)
+
+z_tr_mt <- scale(transposed_matrix)
+
+my_matrix <- t(z_tr_mt)
+
+my_matrix <- na.omit(my_matrix)
+
+ht_opt("heatmap_row_names_gp" = gpar(fontsize = 4), 'heatmap_column_names_gp' = gpar(fontsize = 8))
+col_fun = colorRamp2(c(-2,0,2), c('#55439B', 'grey90', '#E76F00'))
+
+hmap <- Heatmap(my_matrix, name = 'SE PRMT', col = col_fun, border = TRUE, cluster_rows = TRUE, cluster_columns = FALSE, show_column_dend = FALSE, show_row_dend = FALSE, row_names_side = 'left', show_row_names = TRUE, column_km = 1)
+#pdf('../R_figures/day2_PRMTi_commonSE.pdf',height=8, width=4)
+hmap <- draw(hmap)
+#dev.off()
+hmap
+```
+
+
+
+```{r A5SS}
+#load in all the rMATS analyses
+d2g_A5SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/A5SS.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm_A5SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/A5SS.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_A5SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/A5SS.MATS.JCEC.txt', header = T, sep = '\t')
+#compile a list of SE
+A5SS <- list(d2g_A5SS = d2g_A5SS, d2gm_A5SS = d2gm_A5SS, d2m_A5SS = d2m_A5SS)
+#ensure all genes being analyzed have FDR < 0.05 and no duplicate genes; multiply ONLY A5SS by -1
+A5SS <- lapply(A5SS, function(x) filter(x, FDR < 0.05))
+A5SS <- lapply(A5SS, function(x) {x <- x[!duplicated(c('longExonStart_0base', 'longExonEnd', 'shortES', 'shortEE','flankingES','flankingEE')),];x})
+A5SS <- A5SS %>% reduce(inner_join, by=c('longExonStart_0base', 'longExonEnd', 'shortES', 'shortEE','flankingES','flankingEE'))
+A5SS_psi <- A5SS[c(grep("^IncLevelDifference",colnames(A5SS)))]
+colnames(A5SS_psi) <- c('d2g_A5SS', 'd2gm_A5SS', 'd2m_A5SS')
+rownames(A5SS_psi) <- make.names(A5SS$geneSymbol.x, unique=TRUE)
+
+transposed_matrix <- t(A5SS_psi)
+
+z_tr_mt <- scale(transposed_matrix)
+
+my_matrix <- t(z_tr_mt)
+
+my_matrix <- na.omit(my_matrix)
+
+ht_opt("heatmap_row_names_gp" = gpar(fontsize = 4), 'heatmap_column_names_gp' = gpar(fontsize = 8))
+col_fun = colorRamp2(c(-2,0,2), c('#55439B', 'grey90', '#E76F00'))
+hmap <- Heatmap(my_matrix, name = 'A5SS PRMT', col = col_fun, border = TRUE, cluster_rows = TRUE, cluster_columns = FALSE, show_column_dend = FALSE, show_row_dend = FALSE, row_names_side = 'left', show_row_names = TRUE, column_km = 1)
+#pdf('../R_figures/day2_PRMTi_commonA5SS.pdf',height=8, width=4)
+hmap <- draw(hmap)
+#dev.off()
+hmap
+```
+
+
+```{r A3SS}
+#load in all the rMATS analyses
+d2g_A3SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/A3SS.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm_A3SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/A3SS.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_A3SS <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/A3SS.MATS.JCEC.txt', header = T, sep = '\t')
+#compile a list of SE
+A3SS <- list(d2g_A3SS = d2g_A3SS, d2gm_A3SS = d2gm_A3SS, d2m_A3SS = d2m_A3SS)
+#ensure all genes being analyzed have FDR < 0.05 and no duplicate genes; multiply ONLY A3SS by -1
+A3SS <- lapply(A3SS, function(x) filter(x, FDR < 0.05))
+A3SS <- lapply(A3SS, function(x) {x <- x[!duplicated(c('longExonStart_0base', 'longExonEnd', 'shortES', 'shortEE','flankingES','flankingEE')),];x})
+A3SS <- A3SS %>% reduce(inner_join, by=c('longExonStart_0base', 'longExonEnd', 'shortES', 'shortEE','flankingES','flankingEE'))
+A3SS_psi <- A3SS[c(grep("^IncLevelDifference",colnames(A3SS)))]
+colnames(A3SS_psi) <- c('d2g_A3SS', 'd2gm_A3SS', 'd2m_A3SS')
+rownames(A3SS_psi) <- make.names(A3SS$geneSymbol.x, unique=TRUE)
+
+transposed_matrix <- t(A3SS_psi)
+
+z_tr_mt <- scale(transposed_matrix)
+
+my_matrix <- t(z_tr_mt)
+
+my_matrix <- na.omit(my_matrix)
+
+ht_opt("heatmap_row_names_gp" = gpar(fontsize = 4), 'heatmap_column_names_gp' = gpar(fontsize = 8))
+col_fun = colorRamp2(c(-2,0,2), c('#55439B', 'grey90', '#E76F00'))
+hmap <- Heatmap(my_matrix, name = 'A3SS PRMT', col = col_fun, border = TRUE, cluster_rows = TRUE, cluster_columns = FALSE, show_column_dend = FALSE, show_row_dend = FALSE, row_names_side = 'left', show_row_names = TRUE, column_km = 1)
+#pdf('../R_figures/day2_PRMTi_commonA3SS.pdf',height=8, width=4)
+hmap <- draw(hmap)
+#dev.off()
+hmap
+```
+
+```{r MXE}
+#load in all the rMATS analyses
+d2g_MXE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/MXE.MATS.JCEC.txt', header = T, sep = '\t')
+d2gm_MXE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2GM/MXE.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_MXE <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/MXE.MATS.JCEC.txt', header = T, sep = '\t')
+#compile a list of SE
+MXE <- list(d2g_MXE = d2g_MXE, d2gm_MXE = d2gm_MXE, d2m_MXE = d2m_MXE)
+#ensure all genes being analyzed have FDR < 0.05 and no duplicate genes; multiply ONLY MXE by -1
+MXE <- lapply(MXE, function(x) filter(x, FDR < 0.05))
+MXE <- lapply(MXE, function(x) {x <- x[!duplicated(c('X1stExonStart_0base', 'X1stExonEnd', 'X2ndExonStart_0base', 'upstreamES','upstreamEE','downstreamES', 'downstreamEE')),];x})
+MXE <- MXE %>% reduce(inner_join, by=c('X1stExonStart_0base', 'X1stExonEnd', 'X2ndExonStart_0base', 'upstreamES','upstreamEE','downstreamES', 'downstreamEE'))
+MXE_psi <- MXE[c(grep("^IncLevelDifference",colnames(MXE)))]
+colnames(MXE_psi) <- c('d2g_MXE', 'd2gm_MXE', 'd2m_MXE')
+rownames(MXE_psi) <- make.names(MXE$geneSymbol.x, unique=TRUE)
+
+transposed_matrix <- t(MXE_psi)
+
+z_tr_mt <- scale(transposed_matrix)
+
+my_matrix <- t(z_tr_mt)
+
+my_matrix <- na.omit(my_matrix)
+
+ht_opt("heatmap_row_names_gp" = gpar(fontsize = 4), 'heatmap_column_names_gp' = gpar(fontsize = 8))
+col_fun = colorRamp2(c(-2,0,2), c('#55439B', 'grey90', '#E76F00'))
+hmap <- Heatmap(my_matrix, name = 'MXE PRMT', col = col_fun, border = TRUE, cluster_rows = TRUE, cluster_columns = FALSE, show_column_dend = FALSE, show_row_dend = FALSE, row_names_side = 'left', show_row_names = TRUE, column_km = 1)
+#pdf('../R_figures/day2_PRMTi_commonMXE.pdf',height=8, width=4)
+hmap <- draw(hmap)
+#dev.off()
+hmap
+```

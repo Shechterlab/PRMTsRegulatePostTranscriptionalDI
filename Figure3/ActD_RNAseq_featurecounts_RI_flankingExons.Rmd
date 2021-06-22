@@ -1,0 +1,244 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r "setup", include=FALSE}
+#Set the WD here
+knitr::opts_knit$set(root.dir = normalizePath('C:/Users/maxim/Dropbox (EinsteinMed)/CloudStation/PRMT/Actinomycin D/RNAseq/featurecounts/conservative_flanking'))
+```
+
+
+```{r}
+library(tidyverse)
+RI <- read.csv('DMSO_commonRI_conservative.ActD.countdata.csv', header = T)
+Transcript <- read.csv('DMSO_commonRI_conservative_flankingExons.ActD.countdata.csv', header =T)
+
+
+RI <- RI[rowSums(RI[2:4]) >= 10,]
+Transcript <- Transcript[rowSums(Transcript[2:4]) >= 10 & rowSums(Transcript[4:6]) > 10,]
+
+dmso_df <- merge(Transcript, RI, by = 'X')
+
+dmso_df$minus_intron <- rowMeans(dmso_df[8:10])
+dmso_df$minus_transcript <- rowMeans(dmso_df[2:4])
+dmso_df$plus_intron <- rowMeans(dmso_df[11:13])
+dmso_df$plus_transcript <- rowMeans(dmso_df[5:7])
+
+
+
+dmso_df[dmso_df$plus_intron == 0,] <- 1
+#for (i in 1:nrow(dmso_df)) {
+#      if (dmso_df$plus_intron[i] == 0) {
+#        dmso_df$plus_intron[i] <- 1
+#  }
+#}
+
+dmso_df$minus <- dmso_df$minus_intron / dmso_df$minus_transcript
+dmso_df$plus <- dmso_df$plus_intron / dmso_df$plus_transcript
+
+dmso_df$DMSO <- log2(dmso_df$plus)-log2(dmso_df$minus)
+
+dmso_df.m <- reshape2::melt(dmso_df[c(ncol(dmso_df)-2,ncol(dmso_df)-1)])
+
+stat_box_data <- function(y, upper_limit = max(dmso_df.m$value) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+ggplot(dmso_df.m, aes(x=variable, y=value,  fill=variable)) + 
+  geom_violin(alpha=0.5, orientation = 'x')+
+  geom_boxplot(width=0.1)+
+  scale_fill_manual(values=c('#d4d4d4','#d4d4d4'))+
+  labs(title="",x="", y = "")+
+  #geom_jitter(shape=21,wdmso_IDth = .2, alpha = .2) +
+  geom_vline(xintercept = 0 , linetype = 'dashed')+
+  scale_color_manual(values=colors)+
+  theme_classic()+
+  theme(legend.position = 'none')+
+  #ylim(0,3)+  
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+```
+
+
+
+```{r}
+RI <- read.csv('d2g_commonRI_conservative.ActD.countdata.csv', header = T)
+Transcript <- read.csv('d2g_commonRI_conservative_flankingExons.ActD.countdata.csv', header =T)
+
+
+RI <- RI[rowSums(RI[2:4]) >= 10,]
+Transcript <- Transcript[rowSums(Transcript[2:4]) >= 10 & rowSums(Transcript[4:6]) > 10,]
+
+d2g_df <- merge(Transcript, RI, by = 'X')
+
+d2g_df$minus_intron <- rowMeans(d2g_df[8:10])
+d2g_df$minus_transcript <- rowMeans(d2g_df[2:4])
+d2g_df$plus_intron <- rowMeans(d2g_df[11:13])
+d2g_df$plus_transcript <- rowMeans(d2g_df[5:7])
+
+
+
+d2g_df[d2g_df$plus_intron == 0,] <- 1
+#for (i in 1:nrow(d2g_df)) {
+#      if (d2g_df$plus_intron[i] == 0) {
+#        d2g_df$plus_intron[i] <- 1
+#  }
+#}
+
+d2g_df$minus <- d2g_df$minus_intron / d2g_df$minus_transcript
+d2g_df$plus <- d2g_df$plus_intron / d2g_df$plus_transcript
+
+d2g_df$GSK591 <- log2(d2g_df$plus)-log2(d2g_df$minus)
+
+d2g_df.m <- reshape2::melt(d2g_df[c(ncol(d2g_df)-2,ncol(d2g_df)-1)])
+
+stat_box_data <- function(y, upper_limit = max(d2g_df.m$value) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+ggplot(d2g_df.m, aes(x=variable, y=value,  fill=variable)) + 
+  geom_violin(alpha=0.5, orientation = 'x')+
+  geom_boxplot(width=0.1)+
+  scale_fill_manual(values=c('#d4d4d4','#d4d4d4'))+
+  labs(title="",x="", y = "")+
+  #geom_jitter(shape=21,wd2g_IDth = .2, alpha = .2) +
+  geom_vline(xintercept = 0 , linetype = 'dashed')+
+  scale_color_manual(values=colors)+
+  theme_classic()+
+  theme(legend.position = 'none')+
+  #ylim(0,3)+  
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+```
+
+
+```{r}
+RI <- read.csv('d2m_commonRI_conservative.ActD.countdata.csv', header = T)
+Transcript <- read.csv('d2m_commonRI_conservative_flankingExons.ActD.countdata.csv', header =T)
+
+
+RI <- RI[rowSums(RI[2:4]) >= 10,]
+Transcript <- Transcript[rowSums(Transcript[2:4]) >= 10 & rowSums(Transcript[4:6]) > 10,]
+
+d2m_df <- merge(Transcript, RI, by = 'X')
+
+d2m_df$minus_intron <- rowMeans(d2m_df[8:10])
+d2m_df$minus_transcript <- rowMeans(d2m_df[2:4])
+d2m_df$plus_intron <- rowMeans(d2m_df[11:13])
+d2m_df$plus_transcript <- rowMeans(d2m_df[5:7])
+
+
+
+d2m_df[d2m_df$plus_intron == 0,] <- 1
+#for (i in 1:nrow(d2m_df)) {
+#      if (d2m_df$plus_intron[i] == 0) {
+#        d2m_df$plus_intron[i] <- 1
+#  }
+#}
+
+d2m_df$minus <- d2m_df$minus_intron / d2m_df$minus_transcript
+d2m_df$plus <- d2m_df$plus_intron / d2m_df$plus_transcript
+
+d2m_df$MS023 <- log2(d2m_df$plus)-log2(d2m_df$minus)
+
+d2m_df.m <- reshape2::melt(d2m_df[c(ncol(d2m_df)-2,ncol(d2m_df)-1)])
+
+stat_box_data <- function(y, upper_limit = max(d2m_df.m$value) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+ggplot(d2m_df.m, aes(x=variable, y=value,  fill=variable)) + 
+  geom_violin(alpha=0.5, orientation = 'x')+
+  geom_boxplot(width=0.1)+
+  scale_fill_manual(values=c('#d4d4d4','#d4d4d4'))+
+  labs(title="",x="", y = "")+
+  #geom_jitter(shape=21,wd2m_IDth = .2, alpha = .2) +
+  geom_vline(xintercept = 0 , linetype = 'dashed')+
+  scale_color_manual(values=colors)+
+  theme_classic()+
+  theme(legend.position = 'none')+
+  #ylim(0,3)+  
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+```
+
+
+```{r}
+data <- list( dmso = dmso_df, d2g = d2g_df, d2m = d2m_df)
+data <- data %>% reduce(inner_join, by = 'X')
+
+data <- data[c(1, grep('DMSO',colnames(data)),grep('GSK',colnames(data)),grep('MS023',colnames(data)))]
+
+df <- reshape2::melt(data)
+
+stat_box_data <- function(y, upper_limit = max(df$value) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+
+#pdf('../../../../R_figures/ActD_PRMTi_featurecounts_RI_vs_flankingExons.pdf', height=8,width=8)
+ggplot(df, aes(x=variable, y=value,  fill=variable)) + 
+  geom_violin(alpha=0.5, orientation = 'x')+
+  geom_boxplot(width=0.1)+
+  scale_fill_manual(values=c('#D4D4D4','#008837','#7b3294'))+
+  labs(title="",x="", y = "")+
+  #geom_jitter(shape=21,wms023_IDth = .2, alpha = .2) +
+  geom_vline(xintercept = 0 , linetype = 'dashed')+
+  scale_color_manual(values=colors)+
+  theme_classic()+
+  geom_hline(yintercept= median(df[df$variable == 'DMSO',]$value),size=1, linetype ='dotted') +
+  theme(legend.position = 'none')+
+  ylim(-5,2)+  
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+#dev.off()
+
+ks.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'GSK591',]$value, alternative = 'greater')
+ks.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'MS023',]$value, alternative = 'less')
+ks.test(df[df$variable == 'GSK591',]$value, df[df$variable == 'MS023',]$value, alternative = 'less')
+
+wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'GSK591',]$value, paired = TRUE, alternative = "less")
+wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'MS023',]$value, paired = TRUE, alternative = "greater")
+wilcox.test(df[df$variable == 'GSK591',]$value, df[df$variable == 'MS023',]$value,, paired = TRUE, alternative = "greater")
+
+```

@@ -1,0 +1,68 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+```{r "setup", include=FALSE}
+#Set the WD here
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\polyA enrichment\\'))
+library(clusterProfiler)
+library(DOSE)
+#options(connectionObserver = NULL)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(enrichplot)
+library(biomaRt)
+```
+
+
+```{r}
+#load in the dataframes
+GSK_DMSO_input <- read.csv('InputChromatin_GSK_vs_DMSO.csv')
+GSK_DMSO_polyA <- read.csv('polyA_backgroundsubtracted_GSK_vs_DMSO.csv')
+MS023_DMSO_input <- read.csv('InputChromatin_MS023_vs_DMSO.csv')
+MS023_DMSO_polyA <- read.csv('polyA_backgroundsubtracted_MS023_vs_DMSO.csv')
+
+dataframes <- list(GSK_DMSO_input = GSK_DMSO_input, GSK_DMSO_polyA = GSK_DMSO_polyA, MS023_DMSO_input = MS023_DMSO_input, MS023_DMSO_polyA = MS023_DMSO_polyA)
+
+mart <- useMart(biomart="ENSEMBL_MART_ENSEMBL", host="grch37.ensembl.org", path="/biomart/martservice", dataset="hsapiens_gene_ensembl")
+dataframes_symbol <- lapply(dataframes, function(x) getBM(filters= "hgnc_symbol", attributes= c("hgnc_symbol","entrezgene_id"),values=x[3],mart= mart))
+dataframes_symbol <- lapply(dataframes_symbol, setNames, c("Gene.Symbol","entrez_id"))
+dataframes <-mapply(merge, dataframes, dataframes_symbol, SIMPLIFY = FALSE)
+
+#sort by descending Score
+dataframes <- lapply(dataframes, function(x) x[order(-abs(x$Score)),])
+
+
+#remove duplicated entrez ID
+dataframes <- lapply(dataframes, function(x) x[!duplicated(x$entrez_id),])
+```
+
+
+
+```{r}
+input <- list("GSK_input" = dataframes[[1]][["entrez_id"]][1:200], "MS023_input" = dataframes[[3]][["entrez_id"]][1:200])
+
+ck_go <- compareCluster(geneCluster = input, fun = 'enrichGO', OrgDb = org.Hs.eg.db, ont = 'BP', pAdjustMethod = "BH", pvalueCutoff = 0.05, qvalueCutoff = 0.05)
+ck_go_simplify <- simplify(ck_go, cutoff=0.7, by="p.adjust", select_fun=min)
+
+#pdf('../R_figures/Dotplot_Input_polyAenrichment_Top200_byScore.pdf', width = 10, height = 10)
+dotplot(ck_go_simplify, showCategory = 15)+ scale_color_gradient(low = "#2c7bb6", high="#d7191c" ) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  theme(axis.text.x=element_text(angle=45, hjust=1))
+#dev.off()
+```
+
+```{r}
+polyA <- list("GSK_polyA" = dataframes[[2]][["entrez_id"]][1:200], "MS023_polyA" = dataframes[[4]][["entrez_id"]][1:200])
+
+ck_go_polyA <- compareCluster(geneCluster = polyA, fun = 'enrichGO', OrgDb = org.Hs.eg.db, ont = 'BP', pAdjustMethod = "BH", pvalueCutoff = 0.05, qvalueCutoff = 0.05)
+ck_go_polyA_simplify <- simplify(ck_go_polyA, cutoff=0.7, by="p.adjust", select_fun=min)
+
+#pdf('../R_figures/Dotplot_polyAbackgroundsubtracted_polyAenrichment_Top200_byScore.pdf', width = 10, height = 10)
+dotplot(ck_go_polyA_simplify, showCategory = 15)+ scale_color_gradient(low = "#2c7bb6", high="#d7191c" ) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+  theme(axis.text.x=element_text(angle=45, hjust=1))
+#dev.off()
+```
