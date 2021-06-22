@@ -1,0 +1,54 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\RNAseq\\'))
+library(tidyverse)
+
+```
+
+```{r}
+##build data
+d2m_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_d2m/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_RI <- d2m_RI[d2m_RI$FDR < 0.05,]
+d2m_RI$IncLevelDifference <- d2m_RI$IncLevelDifference * -1 
+#d2m_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_d2m/RI.MATS.JCEC.txt', header = T, sep = '\t')
+encode_RI <- read.table('rMATS_4.0.2/ENCSR000CTL_vs_ENCSR000CTM/RI.MATS.JCEC.txt', header = T, sep = '\t')
+encode_RI <- encode_RI[encode_RI$FDR < 0.05,]
+encode_RI$IncLevelDifference <- encode_RI$IncLevelDifference * -1 
+
+data <- merge(d2m_RI, encode_RI, by = c('chr','upstreamEE','downstreamES'))
+```
+
+```{r}
+d2g_col <- '#008837'
+d2m_col <- '#7b3294'
+
+#pdf('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\R_figures\\d2m_vs_encode_cyto_nuc_RI.pdf', height = 8, width = 8)
+ggplot(data, aes(x=IncLevelDifference.x, y=IncLevelDifference.y)) +
+    geom_point(shape=1, color = d2m_col, size = 2, alpha = 1) +
+    scale_colour_hue(l=50) + # Use a slightly darker palette than normal
+    #geom_smooth(method=lm,se=FALSE, fullrange = TRUE, color = 'black', fill = 'dimgray') + 
+    guides(color=FALSE) +
+    theme(axis.text.y   = element_text(size=14),
+          axis.text.x   = element_text(size=14),
+          axis.title.y  = element_text(size=14),
+          axis.title.x  = element_text(size=14),
+          panel.background = element_blank(),
+          panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(),
+          axis.line = element_line(colour = "black"),
+          panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )+
+    geom_hline(yintercept=c(0), linetype="dotted")+
+    geom_vline(xintercept=c(0), linetype="dotted")+
+    scale_x_continuous(limits = c(-1, 1)) + 
+    scale_y_continuous(limits = c(-1, 1)) +
+    labs(title="",
+         x="IncLevelDifference_PRMTi", y = "IncLevelDifference_CytoNuc_Encode")
+#dev.off()
+```
+
