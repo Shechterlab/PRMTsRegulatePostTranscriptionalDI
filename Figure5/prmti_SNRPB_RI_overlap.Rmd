@@ -1,0 +1,63 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\RNAseq\\'))
+```
+
+```{r}
+##load libraries
+library(tidyverse)
+library(VennDiagram)
+library(RColorBrewer)
+library(GeneOverlap)
+##build data
+d2g_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m_RI <- read.table('rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+smbkd_gbm <-  read.table('rMATS_4.0.2/PRJEB10298_GBM/RI.MATS.JunctionCountOnly_without_NA.txt', header = T, sep = '\t')
+smbkd_hela <- read.table('rMATS_4.0.2/PRJNA136533_SaltzmanGenesDev/RI.MATS.JCEC.txt', header =T, sep = '\t')
+
+data <- list(d2g_RI = d2g_RI, d2m_RI = d2m_RI, smbkd_gbm = smbkd_gbm, smbkd_hela = smbkd_hela)
+data <- lapply(data, function(x) {x <- x[x$FDR < 0.05,];x})
+#data <- lapply(data, function(x) {x[x$IncLevelDifference < 0,];x})
+#data <- lapply(data, function(x) {x <- x[!duplicated(c(x$upstreamEE, x$downstreamES)),];x})
+data <- lapply(data, function(x) {x <- x[!is.na(c(x$riExonStart_0base)),];x})
+data <- lapply(data, function(x) paste(x$upstreamEE, x$downstreamES, sep = ''))
+
+```
+
+```{r}
+#build intron list
+library(rtracklayer)
+expressed.introns <-as.data.frame(rtracklayer::import('gencode.v19.A549expressed.introns.gtf'))
+```
+
+```{r}
+##build geneoverlap matrix
+gom.self <- newGOM(data, genome.size=nrow(expressed.introns))
+##plot data
+#pdf('../R_figures/Jaccard_overlap_RI_CHTOPkd_data_odds.pdf', height=8, width=8)
+drawHeatmap(gom.self, what='Jaccard', grid.col='Greens')
+#dev.off()
+
+#pdf('../R_figures/oddsratio_overlap_RI_CHTOPkd_data_odds.pdf', height=8, width=8)
+drawHeatmap(gom.self, what='odds.ratio', grid.col='Oranges', log.scale=T, adj.p = T, note.col='black', , ncolused = 9)
+#dev.off()
+```
+
+```{r}
+##test individual odds ratios and so forth
+getMatrix(gom.self, name = "pval")
+getMatrix(gom.self, name = "odds.ratio")
+getMatrix(gom.self, name = "Jaccard")
+
+
+go.obj_GSK591 <- newGeneOverlap(data$d2g_RI, data$smbkd_hela, genome.size = nrow(expressed.introns))
+go.obj_GSK591 <- testGeneOverlap(go.obj_GSK591)
+print(go.obj_GSK591)
+
+go.obj_MS023 <- newGeneOverlap(data$d2m_RI, data$smbkd_hela, genome.size = nrow(expressed.introns))
+go.obj_MS023 <- testGeneOverlap(go.obj_MS023)
+print(go.obj_MS023)
+```
