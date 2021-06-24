@@ -32,9 +32,9 @@ data$transport <- ifelse(grepl(paste(terms,collapse='|'), data$pathways, ignore.
 data <- data[order(data$transport),]
 ggplot(data, aes(x=df, y=GSK.DMSO, color = group, label = Gene.Symbol)) +
   geom_jitter(aes(size=p.value, alpha = group, colour = transport),width=0.1, height=0.1, shape = 20, alpha = 0.5) +
-  scale_color_manual(values= c('#d4d4d4','#008837')) +
+  scale_color_manual(values= c('#d4d4d4','#1f78b4')) +
   geom_text_repel(data = subset(data, transport == 'yes')[1:15,], aes(label=Gene.Symbol),  size=2, colour = "black", max.overlaps = 100)+
-  theme(legend.position = "none",
+  theme(legend.position = "right",
         axis.text.y   = element_text(size=8, colour = "black"),
         axis.text.x   = element_text(size=8, colour = "black"),
         axis.title.y  = element_text(size=8, colour = "black"),
@@ -72,9 +72,9 @@ data$transport <- ifelse(grepl(paste(terms,collapse='|'), data$pathways, ignore.
 data <- data[order(data$transport),]
 ggplot(data, aes(x=df, y=GSK.DMSO, color = group, label = Gene.Symbol)) +
   geom_jitter(aes(size=p.value, alpha = group, colour = transport),width=0.1, height=0.1, shape = 20, alpha = 0.5) +
-  scale_color_manual(values= c('#d4d4d4','#008837')) +
+  scale_color_manual(values= c('#d4d4d4','#1f78b4')) +
   geom_text_repel(data = subset(data, transport == 'yes')[1:15,], aes(label=Gene.Symbol),  size=2, colour = "black", max.overlaps = 100)+
-  theme(legend.position = "none",
+  theme(legend.position = "right",
         axis.text.y   = element_text(size=8, colour = "black"),
         axis.text.x   = element_text(size=8, colour = "black"),
         axis.title.y  = element_text(size=8, colour = "black"),
@@ -115,9 +115,9 @@ data$transport <- ifelse(grepl(paste(terms,collapse='|'), data$pathways, ignore.
 data <- data[order(data$transport),]
 ggplot(data, aes(x=df, y=MS023.DMSO, color = group, label = Gene.Symbol)) +
   geom_jitter(aes(size=p.value, alpha = group, colour = transport),width=0.1, height=0.1, shape = 20, alpha = 0.5) +
-  scale_color_manual(values= c('#d4d4d4','#7b3294')) +
+  scale_color_manual(values= c('#d4d4d4','#1f78b4')) +
   geom_text_repel(data = subset(data, transport == 'yes')[1:15,], aes(label=Gene.Symbol),  size=2, colour = "black", max.overlaps = 100)+
-  theme(legend.position = "none",
+  theme(legend.position = "right",
         axis.text.y   = element_text(size=8, colour = "black"),
         axis.text.x   = element_text(size=8, colour = "black"),
         axis.title.y  = element_text(size=8, colour = "black"),
@@ -158,9 +158,9 @@ data$transport <- ifelse(grepl(paste(terms,collapse='|'), data$pathways, ignore.
 data <- data[order(data$transport),]
 ggplot(data, aes(x=df, y=MS023.DMSO, color = group, label = Gene.Symbol)) +
   geom_jitter(aes(size=p.value, alpha = group, colour = transport),width=0.1, height=0.1, shape = 20, alpha = 0.5) +
-  scale_color_manual(values= c('#d4d4d4','#7b3294')) +
+  scale_color_manual(values= c('#d4d4d4','#1f78b4')) +
   geom_text_repel(data = subset(data, transport == 'yes')[1:15,], aes(label=Gene.Symbol),  size=2, colour = "black", max.overlaps = 100)+
-  theme(legend.position = "none",
+  theme(legend.position = "right",
         axis.text.y   = element_text(size=8, colour = "black"),
         axis.text.x   = element_text(size=8, colour = "black"),
         axis.title.y  = element_text(size=8, colour = "black"),
