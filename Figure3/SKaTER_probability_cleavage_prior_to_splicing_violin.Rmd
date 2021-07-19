@@ -71,9 +71,9 @@ ks.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2g',]$value)
 ks.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2m',]$value)
 ks.test(df[df$variable == 'd2m',]$value, df[df$variable == 'd2g',]$value)
 
-wilcox.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2g',]$value)
-wilcox.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2m',]$value)
-wilcox.test(df[df$variable == 'd2m',]$value, df[df$variable == 'd2g',]$value)
+wilcox.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2g',]$value, alternative = 'greater')
+wilcox.test(df[df$variable == 'dmso',]$value, df[df$variable == 'd2m',]$value, alternative = 'less')
+wilcox.test(df[df$variable == 'd2m',]$value, df[df$variable == 'd2g',]$value, alternative = 'greater')
 ```
 
 

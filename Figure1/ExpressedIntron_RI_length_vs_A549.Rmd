@@ -112,7 +112,7 @@ for ( i in unique(dfs)) {
     n = nrow(combined[combined$df == i,])
     ## standard approach: scramble response value
     random <- sample_n(combined[combined$df == 'hg19',], n)
-    test <- ks.test(combined[combined$df == i,]$length, random$length, alternative = 'greater')
+    test <- wilcox.test(combined[combined$df == i,]$length, random$length, alternative = 'less')
     ## compute & store difference in means; store the value
     res[j,1] <- i
     res[j,2] <- test$p.value

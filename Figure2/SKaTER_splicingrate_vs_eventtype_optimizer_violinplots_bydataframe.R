@@ -57,7 +57,7 @@ ggplot(df[df$df == 'dmso',], aes(x=variable, fill=variable, y=value))+
   )
 #dev.off()
 
-ks.test(df[df$df=='dmso' & df$variable == 'A5SS',]$value, df[df$df=='dmso' & df$variable == 'constitutive intron',]$value, alternative = 'greater')
+ks.test(df[df$df=='dmso' & df$variable == 'A5SS',]$value, df[df$df=='dmso' & df$variable == 'constitutive intron',]$value)
 ks.test(df[df$df=='dmso' & df$variable == 'A5SS',]$value, df[df$df=='dmso' & df$variable == 'casette exon',]$value)
 ks.test(df[df$df=='dmso' & df$variable == 'A5SS',]$value, df[df$df=='dmso' & df$variable == 'A3SS',]$value)
 ks.test(df[df$df=='dmso' & df$variable == 'constitutive intron',]$value, df[df$df=='dmso' & df$variable == 'casette exon',]$value)

@@ -1,8 +1,8 @@
 library(tidyverse)
 setwd('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT')
 #load in all the rMATS analyses
-d2g <- read.table('SKaTER/Sequencing_Analysis/histograms/fractionCleavageBeforeSplicing/GSK591rep1_GSK591rep2_fractionCleavageBeforeSplicing.txt', header = T, sep = '\t')
-d2m <- read.table('SKaTER/Sequencing_Analysis/histograms/fractionCleavageBeforeSplicing/MS023rep1_MS023rep2_fractionCleavageBeforeSplicing.txt', header = T, sep = '\t')
+d2g <- read.table('SKaTER/Sequencing_Analysis/histograms/GSK591rep1_GSK591rep2_fractionCleavageBeforeSplicing.txt', header = T, sep = '\t')
+d2m <- read.table('SKaTER/Sequencing_Analysis/histograms/MS023rep1_MS023rep2_fractionCleavageBeforeSplicing.txt', header = T, sep = '\t')
 #dmso <- read.table('SKaTER/Sequencing_Analysis/histograms/fractionCleavageBeforeSplicing/DMSOrep1_DMSOrep2_fractionCleavageBeforeSplicing.txt', header = F, sep = '\t')
 
 #compile a list of dataframes
@@ -38,7 +38,7 @@ df_RI <- bind_rows(df_RI, .id = 'df')
 
 df <- rbind(df, df_RI)
 
-df <- df[df$df == 'd2g',]
+df <- df[df$df == 'd2m',]
 
 stat_box_data <- function(y, upper_limit = max(df$rate) * 1.15) {
   return( 
@@ -71,6 +71,20 @@ ggplot(df, aes(x=group, fill=group, y=rate))+
   )
 #dev.off()
 
-ks.test(df[df$group == 'global',]$rate, df[df$group == 'RI',]$rate, alternative = 'greater')
-wilcox.test(df[df$group == 'global',]$rate, df[df$group == 'RI',]$rate)
-
+#randomly shuffle and permute data to determine p-value
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'greater')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+## append the observed value to the list of results
+median(res)
+median(res2)

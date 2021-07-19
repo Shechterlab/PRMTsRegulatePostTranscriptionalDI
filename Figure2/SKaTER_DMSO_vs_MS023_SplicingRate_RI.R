@@ -42,7 +42,7 @@ stat_box_data <- function(y, upper_limit = log10(max(df$value)) * 1.15) {
 }
 
 
-pdf('R_figures/dmso_vs_d2m_SKaTER_splicingrate_vs_RI.pdf', height = 10, width = 10)
+#pdf('R_figures/dmso_vs_d2m_SKaTER_splicingrate_vs_RI.pdf', height = 10, width = 10)
 ggplot(df, aes(x=variable, fill=variable, y=log10(value)))+
   scale_fill_manual(values=c('#d4d4d4','#7d3593'))+
   geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
@@ -61,6 +61,7 @@ ggplot(df, aes(x=variable, fill=variable, y=log10(value)))+
     hjust = 0.5,
     vjust = 0.9
   )
-dev.off()
+#dev.off()
 
-ks.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'MS023_rate',]$value, alternative = 'less')
+ks.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'MS023_rate',]$value)
+wilcox.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'MS023_rate',]$value)

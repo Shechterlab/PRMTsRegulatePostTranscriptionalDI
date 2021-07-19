@@ -61,8 +61,6 @@ ggplot(df, aes(x=variable, fill=variable, y=log10(value)))+
 ks.test(dataframes$dmso, dataframes$d2g)
 ks.test(dataframes$dmso, dataframes$d2m)
 ks.test(dataframes$d2m, dataframes$d2g)
-wilcox.test(dataframes$dmso, dataframes$d2g, p.adjust.method = "BH")
-wilcox.test(dataframes$dmso, dataframes$d2m, p.adjust.method = "BH")
-wilcox.test(dataframes$d2g, dataframes$d2m, p.adjust.method = "BH")
-
-kruskal.test(value~variable, data = df)
+wilcox.test(dataframes$dmso, dataframes$d2g, alternative = 'less')
+wilcox.test(dataframes$dmso, dataframes$d2m, alternative = 'greater')
+wilcox.test(dataframes$d2g, dataframes$d2m)

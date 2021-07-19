@@ -49,7 +49,7 @@ df_RI <- bind_rows(df_RI, .id = 'df')
 
 df <- rbind(df, df_RI)
 
-df <- df[df$df == 'd2m',]
+df <- df[df$df == 'd2g',]
 
 stat_box_data <- function(y, upper_limit = max(df$rate) * 1.15) {
   return( 
@@ -86,14 +86,14 @@ ggplot(df, aes(x=group, fill=group, y=rate))+
 
 #randomly shuffle and permute data to determine p-value
 set.seed(101) ## for reproducibility
-nsim <- 100000 ##number of permutations
+nsim <- 1000 ##number of permutations
 res <- numeric(nsim)
 res2 <-numeric(nsim)## set aside space for results
 n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
 for (i in 1:nsim) {
   ## standard approach: scramble response value
   random <- sample_n(df[df$group == 'global',], n)
-  test <- ks.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'greater')
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
   ## compute & store difference in means; store the value
   res[i] <- test$p.value
   res2[i] <- test$statistic

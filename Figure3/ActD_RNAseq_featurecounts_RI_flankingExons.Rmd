@@ -237,8 +237,8 @@ ks.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'GSK591',]$value, al
 ks.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'MS023',]$value, alternative = 'less')
 ks.test(df[df$variable == 'GSK591',]$value, df[df$variable == 'MS023',]$value, alternative = 'less')
 
-wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'GSK591',]$value, paired = TRUE, alternative = "less")
-wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'MS023',]$value, paired = TRUE, alternative = "greater")
-wilcox.test(df[df$variable == 'GSK591',]$value, df[df$variable == 'MS023',]$value,, paired = TRUE, alternative = "greater")
+wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'GSK591',]$value, alternative = "less")
+wilcox.test(df[df$variable == 'DMSO',]$value, df[df$variable == 'MS023',]$value, alternative = "greater")
+wilcox.test(df[df$variable == 'GSK591',]$value, df[df$variable == 'MS023',]$value, alternative = "greater")
 
 ```

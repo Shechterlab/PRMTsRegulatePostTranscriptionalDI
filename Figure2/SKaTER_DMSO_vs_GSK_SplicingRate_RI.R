@@ -42,7 +42,7 @@ stat_box_data <- function(y, upper_limit = log10(max(df$value)) * 1.15) {
 }
 
 
-pdf('R_figures/dmso_vs_d2g_SKaTER_splicingrate_vs_RI.pdf', height = 10, width = 10)
+#pdf('R_figures/dmso_vs_d2g_SKaTER_splicingrate_vs_RI.pdf', height = 10, width = 10)
 ggplot(df, aes(x=variable, fill=variable, y=log10(value)))+
   scale_fill_manual(values=c('#d4d4d4','#108745'))+
   geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
@@ -61,20 +61,6 @@ ggplot(df, aes(x=variable, fill=variable, y=log10(value)))+
     hjust = 0.5,
     vjust = 0.9
   )
-dev.off()
-ks.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'GSK_rate',]$value, alternative = 'greater')
-
-ggplot(df_RI, aes(x=log10(DMSO_rate), y=log10(GSK_rate))) +
-  geom_point(shape=1, size = 2) +
-  #scale_fill_manual(values=c('#d4d4d4','#108745'))+
-  geom_smooth(method=lm,   # Add linear regression lines
-              se=TRUE, fullrange = TRUE, color = 'black', fill = 'dimgray') +
-  #geom_point(aes(fill = df), size =0.5, shape = 21, position = position_jitterdodge()) +
-  #geom_jitter(position = position_dodge2(), color="black", size=0.1, alpha=0.1) +
-  ggtitle("") +
-  xlab("DMSO_rate") + 
-  ylab('GSK_rate') +
-  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
-  theme(panel.background = element_blank()) +
-  theme(panel.grid.minor = element_blank()) 
-  #ylim(-3,3)+
+#dev.off()
+ks.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'GSK_rate',]$value)
+wilcox.test(df[df$variable == 'DMSO_rate',]$value, df[df$variable == 'GSK_rate',]$value)
