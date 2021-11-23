@@ -1,0 +1,228 @@
+---
+title: "RI vs. Global Splicing Rate"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+```{r "setup", include=FALSE}
+#Set the WD here
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\'))
+```
+
+
+```{r}
+library(tidyverse)
+dmso <-  read.table('SKaTER/Sequencing_Analysis/histograms/DMSOrep1_DMSOrep2_splicing_expCutoff=5_histogram.txt', header = F, sep = '\t')
+dmso_coordinates <- str_split_fixed(dmso$V2, ",", 2)
+dmso_coordinates <- gsub("[()]", "", dmso_coordinates)
+colnames(dmso_coordinates) <- c("upstreamEE", "downstreamES")
+dmso <- cbind(dmso, dmso_coordinates)
+dmso$upstreamEE <- strtoi(dmso$upstreamEE)
+dmso$downstreamES <- strtoi(dmso$downstreamES)
+
+#define the RI
+d2g <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2g <- d2g[d2g$FDR < 0.05,]
+d2m <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m <- d2m[d2m$FDR < 0.05,]
+dmso_RI <- rbind(d2g, d2m)
+dmso_RI <- dmso_RI[!duplicated(dmso_RI[c(4,9,10)]),]
+
+dmso_RI <- merge(dmso, dmso_RI, by=c("upstreamEE","downstreamES"))
+dmso_RI$group <- 'RI'
+dmso_RI <- dmso_RI[c(1,2,7,29)]
+colnames(dmso_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+dmso$group <- 'global'
+dmso <- dmso[c(6,7,5,8)]
+colnames(dmso) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(dmso, dmso_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+
+#pdf('R_figures/d2g_SKaTER_splicingrate_vs_RI.pdf', height = 10, width = 10)
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= median(log10(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Splicing Rate)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```
+
+
+
+```{r}
+gsk591 <-  read.table('SKaTER/Sequencing_Analysis/histograms/GSK591rep1_GSK591rep2_splicing_expCutoff=5_histogram.txt', header = F, sep = '\t')
+gsk591_coordinates <- str_split_fixed(gsk591$V2, ",", 2)
+gsk591_coordinates <- gsub("[()]", "", gsk591_coordinates)
+colnames(gsk591_coordinates) <- c("upstreamEE", "downstreamES")
+gsk591 <- cbind(gsk591, gsk591_coordinates)
+gsk591$upstreamEE <- strtoi(gsk591$upstreamEE)
+gsk591$downstreamES <- strtoi(gsk591$downstreamES)
+
+#define the RI
+gsk591_RI <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+gsk591_RI <- gsk591_RI[gsk591_RI$FDR < 0.05,]
+
+gsk591_RI <- merge(gsk591, gsk591_RI, by=c("upstreamEE","downstreamES"))
+gsk591_RI$group <- 'RI'
+gsk591_RI <- gsk591_RI[c(1,2,7,29)]
+colnames(gsk591_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+gsk591$group <- 'global'
+gsk591 <- gsk591[c(6,7,5,8)]
+colnames(gsk591) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(gsk591, gsk591_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= median(log10(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Splicing Rate)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```
+
+
+```{r}
+ms023 <-  read.table('SKaTER/Sequencing_Analysis/histograms/ms023rep1_ms023rep2_splicing_expCutoff=5_histogram.txt', header = F, sep = '\t')
+ms023_coordinates <- str_split_fixed(ms023$V2, ",", 2)
+ms023_coordinates <- gsub("[()]", "", ms023_coordinates)
+colnames(ms023_coordinates) <- c("upstreamEE", "downstreamES")
+ms023 <- cbind(ms023, ms023_coordinates)
+ms023$upstreamEE <- strtoi(ms023$upstreamEE)
+ms023$downstreamES <- strtoi(ms023$downstreamES)
+
+#define the RI
+ms023_RI <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+ms023_RI <- ms023_RI[ms023_RI$FDR < 0.05,]
+
+ms023_RI <- merge(ms023, ms023_RI, by=c("upstreamEE","downstreamES"))
+ms023_RI$group <- 'RI'
+ms023_RI <- ms023_RI[c(1,2,7,29)]
+colnames(ms023_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+ms023$group <- 'global'
+ms023 <- ms023[c(6,7,5,8)]
+colnames(ms023) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(ms023, ms023_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= median(log10(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Splicing Rate)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```

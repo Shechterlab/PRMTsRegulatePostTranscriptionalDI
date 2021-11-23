@@ -1,0 +1,256 @@
+---
+title: "RI vs. Global Intronic Time to Transcribe"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+```{r "setup", include=FALSE}
+#Set the WD here
+knitr::opts_knit$set(root.dir = normalizePath('C:\\Users\\maxim\\Dropbox (EinsteinMed)\\CloudStation\\PRMT\\'))
+```
+
+
+```{r}
+library(tidyverse)
+#load in dataframes
+dmso_1 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_DMSOrep1_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+dmso_2 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_DMSOrep2_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+dmso <- merge(dmso_1, dmso_2, by = 'V2')
+dmso$time <- (dmso$V4.x + dmso$V4.y)/2
+dmso_coordinates <- str_split_fixed(dmso$V2, ",", 2)
+dmso_coordinates <- gsub("[()]", "", dmso_coordinates)
+colnames(dmso_coordinates) <- c("upstreamEE", "downstreamES")
+dmso <- cbind(dmso, dmso_coordinates)
+dmso$upstreamEE <- strtoi(dmso$upstreamEE)
+dmso$downstreamES <- strtoi(dmso$downstreamES)
+
+dmso$distance <- dmso$downstreamES - dmso$upstreamEE
+dmso$rate <- dmso$distance/dmso$time
+
+#define the RI
+d2g <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2g <- d2g[d2g$FDR < 0.05,]
+d2m <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+d2m <- d2m[d2m$FDR < 0.05,]
+dmso_RI <- rbind(d2g, d2m)
+dmso_RI <- dmso_RI[!duplicated(dmso_RI[c(4,9,10)]),]
+
+dmso_RI <- merge(dmso, dmso_RI, by=c("upstreamEE","downstreamES"))
+dmso_RI$group <- 'RI'
+dmso_RI <- dmso_RI[c(grep('upstreamEE',colnames(dmso_RI)),grep('downstreamES',colnames(dmso_RI)),grep('time',colnames(dmso_RI)),grep('group',colnames(dmso_RI)))]
+colnames(dmso_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+dmso$group <- 'global'
+dmso <- dmso[c(grep('upstreamEE',colnames(dmso)),grep('downstreamES',colnames(dmso)),grep('time',colnames(dmso)),grep('group',colnames(dmso)))]
+colnames(dmso) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(dmso, dmso_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+
+
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= log10(median(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Intron Tau)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```
+
+
+
+```{r}
+#load in dataframes
+gsk591_1 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_gsk591rep1_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+gsk591_2 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_gsk591rep2_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+gsk591 <- merge(gsk591_1, gsk591_2, by = 'V2')
+gsk591$time <- (gsk591$V4.x + gsk591$V4.y)/2
+gsk591_coordinates <- str_split_fixed(gsk591$V2, ",", 2)
+gsk591_coordinates <- gsub("[()]", "", gsk591_coordinates)
+colnames(gsk591_coordinates) <- c("upstreamEE", "downstreamES")
+gsk591 <- cbind(gsk591, gsk591_coordinates)
+gsk591$upstreamEE <- strtoi(gsk591$upstreamEE)
+gsk591$downstreamES <- strtoi(gsk591$downstreamES)
+
+gsk591$distance <- gsk591$downstreamES - gsk591$upstreamEE
+gsk591$rate <- gsk591$distance/gsk591$time
+
+#define the RI
+gsk591_RI <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2G/RI.MATS.JCEC.txt', header = T, sep = '\t')
+gsk591_RI <- gsk591_RI[gsk591_RI$FDR < 0.05,]
+
+gsk591_RI <- merge(gsk591, gsk591_RI, by=c("upstreamEE","downstreamES"))
+gsk591_RI$group <- 'RI'
+gsk591_RI <- gsk591_RI[c(grep('upstreamEE',colnames(gsk591_RI)),grep('downstreamES',colnames(gsk591_RI)),grep('time',colnames(gsk591_RI)),grep('group',colnames(gsk591_RI)))]
+colnames(gsk591_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+gsk591$group <- 'global'
+gsk591 <- gsk591[c(grep('upstreamEE',colnames(gsk591)),grep('downstreamES',colnames(gsk591)),grep('time',colnames(gsk591)),grep('group',colnames(gsk591)))]
+colnames(gsk591) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(gsk591, gsk591_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+
+
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= log10(median(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Intron Tau)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```
+
+
+```{r}
+#load in dataframes
+ms023_1 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_ms023rep1_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+ms023_2 <- read.table('SKaTER/Sequencing_Analysis/results/skater_optimize_v0_5_ms023rep2_database_sorted_logX=N_logY=N_all_splicingRates_intronTau_kde_scatter.txt', header = F, sep = '\t')
+ms023 <- merge(ms023_1, ms023_2, by = 'V2')
+ms023$time <- (ms023$V4.x + ms023$V4.y)/2
+ms023_coordinates <- str_split_fixed(ms023$V2, ",", 2)
+ms023_coordinates <- gsub("[()]", "", ms023_coordinates)
+colnames(ms023_coordinates) <- c("upstreamEE", "downstreamES")
+ms023 <- cbind(ms023, ms023_coordinates)
+ms023$upstreamEE <- strtoi(ms023$upstreamEE)
+ms023$downstreamES <- strtoi(ms023$downstreamES)
+
+ms023$distance <- ms023$downstreamES - ms023$upstreamEE
+ms023$rate <- ms023$distance/ms023$time
+
+#define the RI
+ms023_RI <- read.table('RNAseq/rMATS_4.0.2/rmats4.0.2_D4C_vs_D2M/RI.MATS.JCEC.txt', header = T, sep = '\t')
+ms023_RI <- ms023_RI[ms023_RI$FDR < 0.05,]
+
+ms023_RI <- merge(ms023, ms023_RI, by=c("upstreamEE","downstreamES"))
+ms023_RI$group <- 'RI'
+ms023_RI <- ms023_RI[c(grep('upstreamEE',colnames(ms023_RI)),grep('downstreamES',colnames(ms023_RI)),grep('time',colnames(ms023_RI)),grep('group',colnames(ms023_RI)))]
+colnames(ms023_RI) <- c("upstreamEE","downstreamES","rate","group")
+
+ms023$group <- 'global'
+ms023 <- ms023[c(grep('upstreamEE',colnames(ms023)),grep('downstreamES',colnames(ms023)),grep('time',colnames(ms023)),grep('group',colnames(ms023)))]
+colnames(ms023) <- c("upstreamEE","downstreamES","rate","group")
+
+df <- rbind(ms023, ms023_RI)
+
+stat_box_data <- function(y, upper_limit = log10(max(df$rate)) * 1.15) {
+  return( 
+    data.frame(
+      y = 0.95 * upper_limit,
+      label = paste('count =', length(y), '\n',
+                    'median =', round(median(y), 3), '\n')
+    )
+  )
+}
+
+
+
+ggplot(df, aes(x=group, fill=group, y=log10(rate)))+
+  scale_fill_manual(values=c('#afadae','#f2a182'))+
+  geom_violin(alpha=0.5, orientation = 'x', width=1, position=position_dodge(width=0.5))+
+  #geom_jitter(aes(x=group, y=rate), shape =21)+
+  geom_boxplot(width=0.1, fatten=5)+
+  geom_hline(yintercept= log10(median(df[df$group == 'global',]$rate)),size=1, linetype ='dotted') +
+  scale_color_manual(values=c('#afadae','#f2a182')) +
+  theme(legend.position = "right", legend.key = element_rect(colour = NA, fill = NA)) +
+  theme(panel.background = element_blank()) +
+  theme(panel.grid.minor = element_blank()) +
+  labs(title="", y = "log10(Intron Tau)", x="")+
+  stat_summary(
+    fun.data = stat_box_data, 
+    geom = "text", 
+    hjust = 0.5,
+    vjust = 0.9
+  )
+
+
+set.seed(101) ## for reproducibility
+nsim <- 1000 ##number of permutations
+res <- numeric(nsim)
+res2 <-numeric(nsim)## set aside space for results
+n = nrow(df[df$group == 'RI',]) ##define number of rows to sample
+for (i in 1:nsim) {
+  ## standard approach: scramble response value
+  random <- sample_n(df[df$group == 'global',], n)
+  test <- wilcox.test(df[df$group == 'RI',]$rate, random$rate, alternative = 'less')
+  ## compute & store difference in means; store the value
+  res[i] <- test$p.value
+  res2[i] <- test$statistic
+}
+median(res)
+median(res2)
+```
